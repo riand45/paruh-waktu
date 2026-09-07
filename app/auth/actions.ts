@@ -43,3 +43,32 @@ export async function registerAction(
 
   redirect('/auth/register/success')
 }
+
+export async function loginAction(
+  _prevState: LoginFormState,
+  formData: FormData
+): Promise<LoginFormState> {
+  const validatedFields = LoginSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+  })
+
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithPassword(validatedFields.data)
+
+  if (error) {
+    return { message: 'Email atau password salah.' }
+  }
+
+  redirect('/profile')
+}
+
+export async function logoutAction() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/auth/login')
+}
