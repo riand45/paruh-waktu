@@ -39,7 +39,15 @@ export function ProfileForm({ profile }: { profile: OwnProfile }) {
           <p className="text-sm text-destructive">{state.errors.address[0]}</p>
         )}
       </div>
-      {state?.message && <p className="text-sm text-muted-foreground">{state.message}</p>}
+      {state?.message && (
+        <p
+          className={
+            state.status === 'error' ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'
+          }
+        >
+          {state.message}
+        </p>
+      )}
       <Button type="submit" disabled={pending}>
         {pending ? 'Menyimpan...' : 'Simpan Perubahan'}
       </Button>

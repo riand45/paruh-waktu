@@ -25,6 +25,9 @@ export function AvatarUploader({
     const file = event.target.files?.[0]
     if (!file) return
     setError(null)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError('Format file harus JPEG, PNG, atau WebP.')
@@ -44,6 +47,7 @@ export function AvatarUploader({
         .upload(path, file, { upsert: true })
 
       if (uploadError) {
+        console.error('Avatar upload failed:', uploadError)
         setError('Gagal mengunggah avatar. Silakan coba lagi.')
         return
       }

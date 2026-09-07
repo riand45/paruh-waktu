@@ -22,11 +22,11 @@ export async function updateProfileAction(
   try {
     await updateOwnProfile(validatedFields.data)
   } catch (error) {
-    return { message: toSafeErrorMessage(error) }
+    return { status: 'error', message: toSafeErrorMessage(error) }
   }
 
   revalidatePath('/profile')
-  return { message: 'Profil berhasil diperbarui.' }
+  return { status: 'success', message: 'Profil berhasil diperbarui.' }
 }
 
 export async function updateAvatarAction(path: string) {
