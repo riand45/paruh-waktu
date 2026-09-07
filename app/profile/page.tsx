@@ -1,5 +1,6 @@
 import { getOwnProfile } from '@/lib/services/profiles'
 import { logoutAction } from '@/app/auth/actions'
+import { AvatarUploader } from './avatar-uploader'
 import { ProfileForm } from './profile-form'
 import { Button } from '@/components/ui/button'
 
@@ -16,6 +17,7 @@ export default async function ProfilePage() {
           </Button>
         </form>
       </div>
+      <AvatarUploader userId={profile.id} currentAvatarUrl={profile.avatarUrl} />
       <ProfileForm profile={profile} />
     </div>
   )

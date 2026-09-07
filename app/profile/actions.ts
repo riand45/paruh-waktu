@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { updateOwnProfile } from '@/lib/services/profiles'
+import { updateOwnAvatar, updateOwnProfile } from '@/lib/services/profiles'
 import { UpdateProfileSchema, type UpdateProfileFormState } from '@/lib/validations/profile'
 import { toSafeErrorMessage } from '@/lib/errors'
 
@@ -27,4 +27,14 @@ export async function updateProfileAction(
 
   revalidatePath('/profile')
   return { message: 'Profil berhasil diperbarui.' }
+}
+
+export async function updateAvatarAction(path: string) {
+  try {
+    const avatarUrl = await updateOwnAvatar(path)
+    revalidatePath('/profile')
+    return { success: true as const, avatarUrl }
+  } catch (error) {
+    return { success: false as const, message: toSafeErrorMessage(error) }
+  }
 }
