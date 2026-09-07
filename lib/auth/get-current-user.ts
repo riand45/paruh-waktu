@@ -2,6 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { hasRole, type AppRole } from './has-role'
+import { appError } from '@/lib/errors'
 
 export interface CurrentUser {
   id: string
@@ -34,10 +35,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireRole(role: AppRole): Promise<CurrentUser> {
   const user = await getCurrentUser()
   if (!user) {
-    throw new Error('UNAUTHENTICATED')
+    throw appError('UNAUTHENTICATED')
   }
   if (!hasRole(user.roles.map((r) => ({ role: r })), role)) {
-    throw new Error('FORBIDDEN')
+    throw appError('FORBIDDEN')
   }
   return user
 }

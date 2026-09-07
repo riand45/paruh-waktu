@@ -24,4 +24,9 @@ describe('toSafeErrorMessage', () => {
     expect(error.code).toBe('FORBIDDEN')
     expect(error.publicMessage).toBe('custom')
   })
+
+  it('falls back to the default message for a code when none is given', () => {
+    const error = appError('NOT_FOUND')
+    expect(error.publicMessage).toBe('Data yang Anda cari tidak ditemukan.')
+  })
 })
