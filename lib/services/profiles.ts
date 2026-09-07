@@ -81,7 +81,8 @@ export async function updateOwnAvatar(path: string): Promise<string> {
     throw appError('UNAUTHENTICATED')
   }
 
-  if (!path.startsWith(`${user.id}/`)) {
+  const ownFolderPattern = new RegExp(`^${user.id}/[A-Za-z0-9._-]+$`)
+  if (!ownFolderPattern.test(path)) {
     throw appError('FORBIDDEN', 'Anda hanya dapat mengubah avatar Anda sendiri.')
   }
 

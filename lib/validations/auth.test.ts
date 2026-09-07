@@ -40,6 +40,32 @@ describe('RegisterSchema', () => {
     const result = RegisterSchema.safeParse({ ...valid, phone: '123' })
     expect(result.success).toBe(false)
   })
+
+  it('rejects an all-whitespace phone number', () => {
+    const result = RegisterSchema.safeParse({ ...valid, phone: '        ' })
+    expect(result.success).toBe(false)
+  })
+
+  it('trims a padded full name and accepts it when the trimmed length meets the minimum', () => {
+    const result = RegisterSchema.safeParse({ ...valid, fullName: '  Budi  ' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.fullName).toBe('Budi')
+    }
+  })
+
+  it('rejects a name that is only whitespace padding around a single character', () => {
+    const result = RegisterSchema.safeParse({ ...valid, fullName: '  a  ' })
+    expect(result.success).toBe(false)
+  })
+
+  it('trims a padded email before validating and storing it', () => {
+    const result = RegisterSchema.safeParse({ ...valid, email: '  budi@example.com  ' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.email).toBe('budi@example.com')
+    }
+  })
 })
 
 describe('LoginSchema', () => {

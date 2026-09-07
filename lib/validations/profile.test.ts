@@ -41,4 +41,36 @@ describe('UpdateProfileSchema', () => {
       }).success
     ).toBe(false)
   })
+
+  it('rejects an all-whitespace phone number', () => {
+    expect(
+      UpdateProfileSchema.safeParse({
+        fullName: 'Budi Santoso',
+        phone: '        ',
+        address: '',
+      }).success
+    ).toBe(false)
+  })
+
+  it('trims a padded full name and accepts it when the trimmed length meets the minimum', () => {
+    const result = UpdateProfileSchema.safeParse({
+      fullName: '  Budi  ',
+      phone: '081234567890',
+      address: '',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.fullName).toBe('Budi')
+    }
+  })
+
+  it('rejects a name that is only whitespace padding around a single character', () => {
+    expect(
+      UpdateProfileSchema.safeParse({
+        fullName: '  a  ',
+        phone: '081234567890',
+        address: '',
+      }).success
+    ).toBe(false)
+  })
 })
