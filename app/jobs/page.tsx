@@ -11,11 +11,13 @@ export default async function JobsPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
-  const { data: categories } = await supabase
+  const { data: categoriesData, error: categoriesError } = await supabase
     .from('job_categories')
     .select('id, name')
     .eq('is_active', true)
     .order('name')
+
+  const categories = categoriesData ?? []
 
   const jobs = await getJobListing({
     keyword: params.keyword || undefined,
@@ -29,8 +31,13 @@ export default async function JobsPage({
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
       <h1 className="text-xl font-semibold">Cari Pekerjaan</h1>
+      {categoriesError && (
+        <p className="text-sm text-destructive">
+          Gagal memuat data. Silakan muat ulang halaman.
+        </p>
+      )}
       <Suspense fallback={<p className="text-sm text-muted-foreground">Memuat filter...</p>}>
-        <JobFilters categories={categories ?? []} />
+        <JobFilters categories={categories} />
       </Suspense>
       {jobs.length === 0 && (
         <p className="text-sm text-muted-foreground">Tidak ada pekerjaan ditemukan.</p>
