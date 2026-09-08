@@ -79,6 +79,8 @@ export async function submitEmployerVerification(
   })
 
   if (insertError) {
+    await supabase.storage.from('kyc-documents').remove([path])
+
     if (insertError.code === '23505') {
       throw appError(
         'CONFLICT',
