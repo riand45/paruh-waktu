@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getOwnProfile } from '@/lib/services/profiles'
 import { logoutAction } from '@/app/auth/actions'
 import { AvatarUploader } from './avatar-uploader'
@@ -18,6 +19,9 @@ export default async function ProfilePage() {
         </form>
       </div>
       <AvatarUploader userId={profile.id} currentAvatarUrl={profile.avatarUrl} />
+      <Link href="/verification" className="text-sm text-primary underline-offset-4 hover:underline">
+        Ajukan jadi Pemberi Kerja
+      </Link>
       <ProfileForm profile={profile} />
     </div>
   )
