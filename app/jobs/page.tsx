@@ -1,8 +1,21 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { getJobListing } from '@/lib/services/jobs'
-import { createClient } from '@/lib/supabase/server'
+import { getActiveJobCategories } from '@/lib/services/job-categories'
 import { JobFilters } from './job-filters'
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function finiteOrUndefined(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const n = Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function validCategoryOrUndefined(value: string | undefined): string | undefined {
+  if (!value || !UUID_REGEX.test(value)) return undefined
+  return value
+}
 
 export default async function JobsPage({
   searchParams,
@@ -10,22 +23,15 @@ export default async function JobsPage({
   searchParams: Promise<Record<string, string | undefined>>
 }) {
   const params = await searchParams
-  const supabase = await createClient()
-  const { data: categoriesData, error: categoriesError } = await supabase
-    .from('job_categories')
-    .select('id, name')
-    .eq('is_active', true)
-    .order('name')
-
-  const categories = categoriesData ?? []
+  const { categories, error: categoriesError } = await getActiveJobCategories()
 
   const jobs = await getJobListing({
     keyword: params.keyword || undefined,
-    categoryId: params.category || undefined,
-    minPayment: params.minPayment ? Number(params.minPayment) : undefined,
-    maxPayment: params.maxPayment ? Number(params.maxPayment) : undefined,
-    workerLat: params.lat ? Number(params.lat) : undefined,
-    workerLng: params.lng ? Number(params.lng) : undefined,
+    categoryId: validCategoryOrUndefined(params.category),
+    minPayment: finiteOrUndefined(params.minPayment),
+    maxPayment: finiteOrUndefined(params.maxPayment),
+    workerLat: finiteOrUndefined(params.lat),
+    workerLng: finiteOrUndefined(params.lng),
   })
 
   return (

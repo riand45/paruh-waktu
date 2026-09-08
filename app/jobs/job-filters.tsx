@@ -36,6 +36,15 @@ export function JobFilters({ categories }: { categories: { id: string; name: str
     router.push(`/jobs?${params.toString()}`)
   }
 
+  function clearLocation() {
+    const params = new URLSearchParams()
+    if (keyword) params.set('keyword', keyword)
+    if (category) params.set('category', category)
+    if (minPayment) params.set('minPayment', minPayment)
+    if (maxPayment) params.set('maxPayment', maxPayment)
+    router.push(`/jobs?${params.toString()}`)
+  }
+
   function handleNearMe() {
     setLocationError(null)
     if (!navigator.geolocation) {
@@ -98,6 +107,11 @@ export function JobFilters({ categories }: { categories: { id: string; name: str
         <Button type="button" variant="outline" onClick={handleNearMe} disabled={locating}>
           {locating ? 'Mendeteksi...' : 'Terdekat'}
         </Button>
+        {searchParams.get('lat') && (
+          <Button type="button" variant="outline" onClick={clearLocation}>
+            Semua Lokasi
+          </Button>
+        )}
       </div>
       {locationError && <p className="text-sm text-destructive">{locationError}</p>}
     </div>

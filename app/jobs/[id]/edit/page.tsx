@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveJobCategories } from '@/lib/services/job-categories'
 import { updateJobAction } from '../../actions'
 import { JobForm } from '../../job-form'
 
@@ -28,20 +29,25 @@ export default async function EditJobPage({
     notFound()
   }
 
-  const { data: categories } = await supabase
-    .from('job_categories')
-    .select('id, name')
-    .eq('is_active', true)
-    .order('name')
+  const { categories, error: categoriesError } = await getActiveJobCategories()
 
   const boundUpdateAction = updateJobAction.bind(null, job.id)
+
+  const deadlineDate = new Date(job.deadline)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const deadline = `${deadlineDate.getFullYear()}-${pad(deadlineDate.getMonth() + 1)}-${pad(deadlineDate.getDate())}T${pad(deadlineDate.getHours())}:${pad(deadlineDate.getMinutes())}`
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
       <h1 className="text-xl font-semibold">Edit Pekerjaan</h1>
+      {categoriesError && (
+        <p className="text-sm text-destructive">
+          Gagal memuat data. Silakan muat ulang halaman.
+        </p>
+      )}
       <JobForm
         action={boundUpdateAction}
-        categories={categories ?? []}
+        categories={categories}
         submitLabel="Simpan Perubahan"
         defaultValues={{
           title: job.title,
@@ -52,7 +58,7 @@ export default async function EditJobPage({
           longitude: String(job.longitude),
           paymentAmount: String(job.payment_amount),
           durationMinutes: String(job.duration_minutes),
-          deadline: new Date(job.deadline).toISOString().slice(0, 16),
+          deadline,
         }}
       />
     </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
-import { createClient } from '@/lib/supabase/server'
+import { getActiveJobCategories } from '@/lib/services/job-categories'
 import { createJobAction } from '../actions'
 import { JobForm } from '../job-form'
 
@@ -23,17 +23,17 @@ export default async function NewJobPage() {
     )
   }
 
-  const supabase = await createClient()
-  const { data: categories } = await supabase
-    .from('job_categories')
-    .select('id, name')
-    .eq('is_active', true)
-    .order('name')
+  const { categories, error: categoriesError } = await getActiveJobCategories()
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
       <h1 className="text-xl font-semibold">Buat Pekerjaan</h1>
-      <JobForm action={createJobAction} categories={categories ?? []} submitLabel="Publikasikan" />
+      {categoriesError && (
+        <p className="text-sm text-destructive">
+          Gagal memuat data. Silakan muat ulang halaman.
+        </p>
+      )}
+      <JobForm action={createJobAction} categories={categories} submitLabel="Publikasikan" />
     </div>
   )
 }
