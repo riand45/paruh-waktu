@@ -1,5 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { hasRole, type AppRole } from './has-role'
 import { appError } from '@/lib/errors'
@@ -41,4 +42,16 @@ export async function requireRole(role: AppRole): Promise<CurrentUser> {
     throw appError('FORBIDDEN')
   }
   return user
+}
+
+// Defense-in-depth for Next.js soft navigation between sibling routes under
+// the same layout, which does not re-run the layout's own requireRole guard.
+// Pages under /admin call this directly so a mid-session role change (e.g. a
+// demoted admin) still results in a 404 instead of an uncaught AppError.
+export async function requireAdminOr404(): Promise<void> {
+  try {
+    await requireRole('admin')
+  } catch {
+    notFound()
+  }
 }
