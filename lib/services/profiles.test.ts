@@ -56,4 +56,17 @@ describe('updateOwnAvatar', () => {
   it('rejects a path directly under a different user\'s folder', async () => {
     await expect(updateOwnAvatar(`${OTHER_USER_ID}/x.png`)).rejects.toThrow()
   })
+
+  it('accepts realistic filenames with spaces, parens, and unicode', async () => {
+    await expect(
+      updateOwnAvatar(`${OWN_USER_ID}/Screenshot 2024-01-01 at 10.23.45.png`)
+    ).resolves.toBe(PUBLIC_URL)
+    await expect(updateOwnAvatar(`${OWN_USER_ID}/IMG (1).jpg`)).resolves.toBe(PUBLIC_URL)
+    await expect(updateOwnAvatar(`${OWN_USER_ID}/café.png`)).resolves.toBe(PUBLIC_URL)
+  })
+
+  it('rejects a bare "." or ".." as the filename segment', async () => {
+    await expect(updateOwnAvatar(`${OWN_USER_ID}/..`)).rejects.toThrow()
+    await expect(updateOwnAvatar(`${OWN_USER_ID}/.`)).rejects.toThrow()
+  })
 })

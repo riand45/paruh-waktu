@@ -8,7 +8,11 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
   const nextParam = searchParams.get('next') ?? '/profile'
-  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/profile'
+  // Reject anything but a single-slash-rooted relative path: "//evil.com" is
+  // protocol-relative, and "/\evil.com" is resolved the same way by browsers
+  // even though it doesn't start with a second "/".
+  const isSafeRelativePath = /^\/(?!\/|\\)/.test(nextParam)
+  const next = isSafeRelativePath ? nextParam : '/profile'
 
   if (tokenHash && type) {
     const supabase = await createClient()
