@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { requireRole } from '@/lib/auth/get-current-user'
+import { requireAdminOr404 } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { ReviewForm } from './review-form'
 
@@ -8,7 +8,7 @@ export default async function EmployerVerificationDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await requireRole('admin')
+  await requireAdminOr404()
 
   const { id } = await params
   const supabase = await createClient()
@@ -23,9 +23,13 @@ export default async function EmployerVerificationDetailPage({
     notFound()
   }
 
-  const { data: signedUrlData } = await supabase.storage
+  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
     .from('kyc-documents')
     .createSignedUrl(data.ktp_document_path, 60)
+
+  const lowerPath = data.ktp_document_path.toLowerCase()
+  const isImage =
+    lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg') || lowerPath.endsWith('.png')
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
@@ -46,9 +50,24 @@ export default async function EmployerVerificationDetailPage({
           </div>
         )}
       </dl>
+      {signedUrlError && (
+        <p className="text-sm text-destructive">Gagal memuat dokumen KTP.</p>
+      )}
       {signedUrlData?.signedUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL, not a static/optimizable asset
-        <img src={signedUrlData.signedUrl} alt="Dokumen KTP" className="w-full rounded border" />
+        <>
+          <a
+            href={signedUrlData.signedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm underline"
+          >
+            Buka dokumen KTP
+          </a>
+          {isImage && (
+            // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL, not a static/optimizable asset
+            <img src={signedUrlData.signedUrl} alt="Dokumen KTP" className="w-full rounded border" />
+          )}
+        </>
       )}
       {data.status === 'pending' && <ReviewForm verificationId={data.id} />}
     </div>
