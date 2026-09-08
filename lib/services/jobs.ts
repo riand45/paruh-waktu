@@ -76,7 +76,7 @@ export async function updateJob(jobId: string, input: CreateJobInput): Promise<v
 
   await assertActiveCategory(supabase, validated.categoryId)
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('jobs')
     .update({
       category_id: validated.categoryId,
@@ -90,9 +90,15 @@ export async function updateJob(jobId: string, input: CreateJobInput): Promise<v
       deadline: validated.deadline.toISOString(),
     })
     .eq('id', jobId)
+    .eq('employer_id', user.id)
+    .eq('status', 'open')
+    .select('id')
 
   if (error) {
     throw appError('INTERNAL_ERROR')
+  }
+  if (!updated || updated.length === 0) {
+    throw appError('CONFLICT', 'Pekerjaan yang sudah tidak berstatus "open" tidak dapat diedit.')
   }
 }
 
@@ -165,7 +171,10 @@ async function getDefaultJobRadiusKm(supabase: ServiceClient): Promise<number> {
 }
 
 export async function getJobListing(filters: JobListingFilters): Promise<JobListing[]> {
-  await getCurrentUser()
+  const user = await getCurrentUser()
+  if (!user) {
+    throw appError('UNAUTHENTICATED')
+  }
   const supabase = createServiceClient()
 
   let query = supabase
@@ -188,7 +197,7 @@ export async function getJobListing(filters: JobListingFilters): Promise<JobList
     query = query.lte('payment_amount', filters.maxPayment)
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false })
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(200)
   if (error) {
     throw appError('INTERNAL_ERROR')
   }
