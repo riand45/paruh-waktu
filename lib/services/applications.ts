@@ -198,6 +198,14 @@ export async function getApplicationsForJob(jobId: string): Promise<ApplicantSum
   }
 
   const rows = applications ?? []
+
+  const statusOrder: Record<string, number> = { accepted: 0, pending: 1, rejected: 2, cancelled: 2 }
+  rows.sort(
+    (a, b) =>
+      (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3) ||
+      new Date(b.applied_at).getTime() - new Date(a.applied_at).getTime()
+  )
+
   const nameById = await loadProfileNames(
     supabase,
     rows.map((row) => row.worker_id)

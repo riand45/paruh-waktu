@@ -32,11 +32,13 @@ export async function applyToJobAction(
 export async function cancelApplicationAction(applicationId: string, jobId: string): Promise<void> {
   try {
     await cancelApplication(applicationId)
-  } catch {
+  } catch (error) {
     // Swallow: a race (e.g. the employer reviewed it moments earlier) is
     // resolved by the revalidation below showing the application's actual
     // current status — there's no separate error UI for this simple
-    // fire-and-forget cancel button.
+    // fire-and-forget cancel button. Still log so a genuine failure (not
+    // just the anticipated race) leaves a trace.
+    console.error('[cancelApplicationAction]', error)
   }
   revalidatePath(`/jobs/${jobId}`)
   revalidatePath('/applications/mine')

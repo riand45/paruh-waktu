@@ -17,7 +17,12 @@ export default async function MyApplicationsPage() {
               href={`/jobs/${application.jobId}`}
               className="flex items-center justify-between rounded border p-3 text-sm hover:bg-muted"
             >
-              <span>{application.jobTitle}</span>
+              <span className="flex flex-col">
+                <span>{application.jobTitle}</span>
+                <span className="text-xs text-muted-foreground">
+                  Melamar pada {new Date(application.appliedAt).toLocaleString('id-ID')}
+                </span>
+              </span>
               <span className="text-muted-foreground">{application.status}</span>
             </Link>
           </li>
