@@ -8,10 +8,7 @@ import { ApplyToJobSchema, type ApplyToJobInput } from '@/lib/validations/applic
 type ServiceClient = ReturnType<typeof createServiceClient>
 
 export async function applyToJob(jobId: string, input: ApplyToJobInput): Promise<{ id: string }> {
-  const user = await getCurrentUser()
-  if (!user) {
-    throw appError('UNAUTHENTICATED')
-  }
+  const user = await requireRole('worker')
   const validated = ApplyToJobSchema.parse(input)
 
   const supabase = createServiceClient()
