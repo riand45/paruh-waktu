@@ -265,11 +265,23 @@ export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
     return null
   }
 
-  const isVisible =
+  let isVisible =
     job.status === 'open' ||
     job.employer_id === user.id ||
     job.assigned_worker_id === user.id ||
     hasRole(user.roles.map((role) => ({ role })), 'admin')
+
+  if (!isVisible) {
+    const { data: application } = await supabase
+      .from('job_applications')
+      .select('id')
+      .eq('job_id', jobId)
+      .eq('worker_id', user.id)
+      .order('applied_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    isVisible = Boolean(application)
+  }
 
   if (!isVisible) {
     return null
