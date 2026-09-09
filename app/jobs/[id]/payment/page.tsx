@@ -11,6 +11,19 @@ interface AdminBankAccount {
   account_holder_name: string
 }
 
+function isValidBankAccount(value: unknown): value is AdminBankAccount {
+  if (!value || typeof value !== 'object') return false
+  const v = value as Record<string, unknown>
+  return (
+    typeof v.bank_name === 'string' &&
+    v.bank_name.length > 0 &&
+    typeof v.account_number === 'string' &&
+    v.account_number.length > 0 &&
+    typeof v.account_holder_name === 'string' &&
+    v.account_holder_name.length > 0
+  )
+}
+
 export default async function JobPaymentPage({
   params,
 }: {
@@ -39,7 +52,7 @@ export default async function JobPaymentPage({
     .eq('key', 'admin_bank_account')
     .maybeSingle()
 
-  const bankAccount = bankSetting?.value as AdminBankAccount | undefined
+  const bankAccount = isValidBankAccount(bankSetting?.value) ? bankSetting.value : null
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
@@ -60,6 +73,11 @@ export default async function JobPaymentPage({
           </div>
         </dl>
       )}
+      {!bankAccount && (
+        <p className="text-sm text-destructive">
+          Rekening tujuan belum dikonfigurasi. Hubungi Admin.
+        </p>
+      )}
       <dl className="flex flex-col gap-2 text-sm">
         <div>
           <dt className="text-muted-foreground">Total yang Harus Ditransfer</dt>
@@ -73,7 +91,7 @@ export default async function JobPaymentPage({
       {payment.status === 'rejected' && payment.rejectionReason && (
         <p className="text-sm text-destructive">Alasan penolakan: {payment.rejectionReason}</p>
       )}
-      {(payment.status === 'waiting_payment' || payment.status === 'rejected') && (
+      {bankAccount && (payment.status === 'waiting_payment' || payment.status === 'rejected') && (
         <PaymentProofForm paymentId={payment.id} jobId={id} />
       )}
       {payment.status === 'waiting_verification' && (
