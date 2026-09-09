@@ -55,6 +55,9 @@ export async function getPaymentForJob(jobId: string): Promise<PaymentDetail | n
   if (job && job.employer_id === user.id) {
     const { error } = await supabase.rpc('get_or_create_payment', { p_job_id: jobId })
     if (error) {
+      if (error.message.includes('CONFLICT') || error.message.includes('NOT_FOUND')) {
+        return null
+      }
       throw appError('INTERNAL_ERROR')
     }
   }
@@ -160,8 +163,18 @@ export async function getPendingPayments(): Promise<PendingPaymentSummary[]> {
   const jobIds = rows.map((row) => row.job_id)
   const employerIds = rows.map((row) => row.employer_id)
 
-  const { data: jobs } = await supabase.from('jobs').select('id, title').in('id', jobIds)
-  const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', employerIds)
+  const { data: jobs, error: jobsError } = await supabase.from('jobs').select('id, title').in('id', jobIds)
+  if (jobsError) {
+    throw appError('INTERNAL_ERROR')
+  }
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', employerIds)
+  if (profilesError) {
+    throw appError('INTERNAL_ERROR')
+  }
 
   const titleById = new Map((jobs ?? []).map((job) => [job.id, job.title]))
   const nameById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]))
@@ -198,12 +211,23 @@ export async function getPaymentDetailForAdmin(paymentId: string): Promise<Admin
     return null
   }
 
-  const { data: job } = await supabase.from('jobs').select('title').eq('id', payment.job_id).maybeSingle()
-  const { data: profile } = await supabase
+  const { data: job, error: jobError } = await supabase
+    .from('jobs')
+    .select('title')
+    .eq('id', payment.job_id)
+    .maybeSingle()
+  if (jobError) {
+    throw appError('INTERNAL_ERROR')
+  }
+
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('full_name')
     .eq('id', payment.employer_id)
     .maybeSingle()
+  if (profileError) {
+    throw appError('INTERNAL_ERROR')
+  }
 
   const { data: proofs, error: proofsError } = await supabase
     .from('payment_proofs')
