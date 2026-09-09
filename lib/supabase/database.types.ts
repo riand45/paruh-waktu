@@ -986,8 +986,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_job_completion: { Args: { p_job_id: string }; Returns: undefined }
       get_or_create_payment: { Args: { p_job_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      record_job_evidence: {
+        Args: {
+          p_file_path: string
+          p_file_size_bytes: number
+          p_file_type: string
+          p_job_id: string
+        }
+        Returns: string
+      }
       review_employer_verification: {
         Args: {
           p_decision: string
@@ -1008,6 +1018,8 @@ export type Database = {
         Args: { p_application_id: string; p_job_id: string }
         Returns: undefined
       }
+      start_work: { Args: { p_job_id: string }; Returns: undefined }
+      submit_job_completion: { Args: { p_job_id: string }; Returns: undefined }
       submit_payment_proof: {
         Args: {
           p_file_path: string
