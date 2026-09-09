@@ -83,6 +83,17 @@ export default async function JobDetailPage({
           Lihat Pelamar
         </Link>
       )}
+      {isOwner &&
+        ['assigned', 'waiting_payment', 'payment_review', 'payment_verified', 'payment_rejected'].includes(
+          job.status
+        ) && (
+          <Link
+            href={`/jobs/${job.id}/payment`}
+            className="text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Lihat Pembayaran
+          </Link>
+        )}
       {!isOwner && myApplication && !canApply && (
         <div className="flex flex-col gap-2 rounded border p-3 text-sm">
           <span className="text-muted-foreground">Status Lamaran Anda</span>
