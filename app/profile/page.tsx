@@ -28,6 +28,9 @@ export default async function ProfilePage() {
       <Link href="/jobs" className="text-sm text-primary underline-offset-4 hover:underline">
         Cari Pekerjaan
       </Link>
+      <Link href="/applications/mine" className="text-sm text-primary underline-offset-4 hover:underline">
+        Lamaran Saya
+      </Link>
       {isEmployer && (
         <>
           <Link href="/jobs/new" className="text-sm text-primary underline-offset-4 hover:underline">
