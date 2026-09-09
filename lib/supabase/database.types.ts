@@ -995,6 +995,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      select_job_worker: {
+        Args: { p_application_id: string; p_job_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
