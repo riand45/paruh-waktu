@@ -277,6 +277,8 @@ export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
       .select('id')
       .eq('job_id', jobId)
       .eq('worker_id', user.id)
+      .order('applied_at', { ascending: false })
+      .limit(1)
       .maybeSingle()
     isVisible = Boolean(application)
   }
