@@ -75,6 +75,14 @@ export default async function JobDetailPage({
           Edit Pekerjaan
         </Link>
       )}
+      {isOwner && (
+        <Link
+          href={`/jobs/${job.id}/applicants`}
+          className="text-sm text-primary underline-offset-4 hover:underline"
+        >
+          Lihat Pelamar
+        </Link>
+      )}
       {!isOwner && myApplication && !canApply && (
         <div className="flex flex-col gap-2 rounded border p-3 text-sm">
           <span className="text-muted-foreground">Status Lamaran Anda</span>

@@ -31,13 +31,19 @@ export default async function MyJobsPage() {
       )}
       <ul className="flex flex-col gap-2">
         {jobs.map((job) => (
-          <li key={job.id}>
+          <li key={job.id} className="flex items-center justify-between rounded border p-3 text-sm">
             <Link
               href={job.status === 'open' ? `/jobs/${job.id}/edit` : `/jobs/${job.id}`}
-              className="flex items-center justify-between rounded border p-3 text-sm hover:bg-muted"
+              className="flex flex-col gap-1 hover:underline"
             >
-              <span>{job.title}</span>
+              <span className="font-medium">{job.title}</span>
               <span className="text-muted-foreground">{job.status}</span>
+            </Link>
+            <Link
+              href={`/jobs/${job.id}/applicants`}
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Pelamar
             </Link>
           </li>
         ))}
