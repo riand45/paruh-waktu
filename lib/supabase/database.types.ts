@@ -986,6 +986,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_or_create_payment: { Args: { p_job_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       review_employer_verification: {
         Args: {
@@ -995,9 +996,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      review_payment: {
+        Args: {
+          p_decision: string
+          p_payment_id: string
+          p_rejection_reason?: string
+        }
+        Returns: undefined
+      }
       select_job_worker: {
         Args: { p_application_id: string; p_job_id: string }
         Returns: undefined
+      }
+      submit_payment_proof: {
+        Args: {
+          p_file_path: string
+          p_file_size_bytes: number
+          p_payment_id: string
+          p_transfer_date: string
+        }
+        Returns: string
       }
     }
     Enums: {
