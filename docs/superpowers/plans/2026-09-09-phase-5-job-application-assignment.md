@@ -1260,7 +1260,7 @@ npx vitest run
 npm run build
 ```
 
-Expected: all four succeed. Test count should be the current total (102 as of Phase 4's merge) + Task 1's 4 = 106.
+Expected: all four succeed. Test count should be the current total (51 as of Phase 4's merge) + Task 1's 4 = 55.
 
 - [ ] **Step 2: Create four throwaway test accounts**
 
