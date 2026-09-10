@@ -31,39 +31,66 @@ export function ChatThread({
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    let cancelled = false
     const supabase = createClient()
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const row = payload.new as {
-            id: string
-            sender_id: string
-            body: string
-            created_at: string
-          }
-          setMessages((current) => {
-            if (current.some((message) => message.id === row.id)) {
-              return current
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    async function subscribeToMessages() {
+      // `createBrowserClient` resolves its session from cookies asynchronously, and only
+      // then does supabase-js propagate the access token to the Realtime client (via
+      // `onAuthStateChange`'s INITIAL_SESSION event calling `realtime.setAuth`). Subscribing
+      // before that finishes sends the channel's `phx_join` without an access token, so the
+      // server authorizes the channel at anon level and silently never forwards this
+      // RLS-gated table's postgres_changes events. Resolving the session and setting the
+      // Realtime auth explicitly, before subscribing, closes that race.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (cancelled) return
+
+      if (session?.access_token) {
+        await supabase.realtime.setAuth(session.access_token)
+        if (cancelled) return
+      }
+
+      channel = supabase
+        .channel(`messages:${conversationId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            const row = payload.new as {
+              id: string
+              sender_id: string
+              body: string
+              created_at: string
             }
-            return [
-              ...current,
-              { id: row.id, senderId: row.sender_id, body: row.body, createdAt: row.created_at },
-            ]
-          })
-        }
-      )
-      .subscribe()
+            setMessages((current) => {
+              if (current.some((message) => message.id === row.id)) {
+                return current
+              }
+              return [
+                ...current,
+                { id: row.id, senderId: row.sender_id, body: row.body, createdAt: row.created_at },
+              ]
+            })
+          }
+        )
+        .subscribe()
+    }
+
+    subscribeToMessages()
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [conversationId])
 
