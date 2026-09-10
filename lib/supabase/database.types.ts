@@ -993,6 +993,10 @@ export type Database = {
       }
       get_or_create_payment: { Args: { p_job_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
       mark_withdrawal_paid: {
         Args: { p_transfer_proof_path: string; p_withdrawal_id: string }
         Returns: undefined
