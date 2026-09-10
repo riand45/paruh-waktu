@@ -94,6 +94,17 @@ export default async function JobDetailPage({
             Lihat Pembayaran
           </Link>
         )}
+      {(isOwner || job.assignedWorkerId === user?.id) &&
+        ['payment_verified', 'in_progress', 'waiting_confirmation', 'completed'].includes(
+          job.status
+        ) && (
+          <Link
+            href={`/jobs/${job.id}/completion`}
+            className="text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Lihat Progres Pekerjaan
+          </Link>
+        )}
       {!isOwner && myApplication && !canApply && (
         <div className="flex flex-col gap-2 rounded border p-3 text-sm">
           <span className="text-muted-foreground">Status Lamaran Anda</span>
