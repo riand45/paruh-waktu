@@ -84,9 +84,16 @@ export default async function JobDetailPage({
         </Link>
       )}
       {isOwner &&
-        ['assigned', 'waiting_payment', 'payment_review', 'payment_verified', 'payment_rejected'].includes(
-          job.status
-        ) && (
+        [
+          'assigned',
+          'waiting_payment',
+          'payment_review',
+          'payment_verified',
+          'payment_rejected',
+          'in_progress',
+          'waiting_confirmation',
+          'completed',
+        ].includes(job.status) && (
           <Link
             href={`/jobs/${job.id}/payment`}
             className="text-sm text-primary underline-offset-4 hover:underline"

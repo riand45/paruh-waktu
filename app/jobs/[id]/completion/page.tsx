@@ -91,7 +91,7 @@ export default async function JobCompletionPage({
       {isAssignedWorker && job.status === 'in_progress' && (
         <>
           <EvidenceUploadForm jobId={id} />
-          <SubmitCompletionButton jobId={id} />
+          <SubmitCompletionButton jobId={id} disabled={evidencesWithUrls.length === 0} />
         </>
       )}
       {isEmployer && job.status === 'waiting_confirmation' && <ConfirmCompletionButton jobId={id} />}
