@@ -987,6 +987,10 @@ export type Database = {
     }
     Functions: {
       confirm_job_completion: { Args: { p_job_id: string }; Returns: undefined }
+      get_or_create_conversation: {
+        Args: { p_job_id: string }
+        Returns: string
+      }
       get_or_create_payment: { Args: { p_job_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       mark_withdrawal_paid: {
