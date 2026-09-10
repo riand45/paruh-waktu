@@ -133,11 +133,7 @@ export async function markConversationRead(conversationId: string): Promise<void
   }
 
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('conversation_participants')
-    .update({ last_read_at: new Date().toISOString() })
-    .eq('conversation_id', conversationId)
-    .eq('user_id', user.id)
+  const { error } = await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId })
 
   if (error) {
     throw appError('INTERNAL_ERROR')

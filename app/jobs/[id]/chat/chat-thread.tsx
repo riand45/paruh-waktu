@@ -28,12 +28,45 @@ export function ChatThread({
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [connectionError, setConnectionError] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
+    // Tracks whether this effect instance has already seen a dropped connection, so a
+    // later 'SUBSCRIBED' can tell "first join" apart from "reconnected after a drop" and
+    // only backfill (below) in the latter case. Local to this effect run, not React
+    // state — it doesn't need to trigger a render on its own.
+    let hadConnectionError = false
     const supabase = createClient()
     let channel: ReturnType<typeof supabase.channel> | null = null
+
+    async function backfillMessages() {
+      // The socket was down for some stretch of time; postgres_changes events for any
+      // message inserted during that gap were never delivered and never will be. Refetch
+      // the full history so those messages appear without requiring a manual reload.
+      const { data, error: fetchError } = await supabase
+        .from('messages')
+        .select('id, sender_id, body, created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+
+      if (cancelled) return
+
+      if (fetchError) {
+        console.error('Failed to backfill messages after reconnect:', fetchError)
+        return
+      }
+
+      setMessages(
+        (data ?? []).map((row) => ({
+          id: row.id,
+          senderId: row.sender_id,
+          body: row.body,
+          createdAt: row.created_at,
+        }))
+      )
+    }
 
     async function subscribeToMessages() {
       // `createBrowserClient` resolves its session from cookies asynchronously, and only
@@ -81,10 +114,30 @@ export function ChatThread({
             })
           }
         )
-        .subscribe()
+        .subscribe((status) => {
+          if (cancelled) return
+
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            hadConnectionError = true
+            setConnectionError(true)
+            return
+          }
+
+          if (status === 'SUBSCRIBED') {
+            setConnectionError(false)
+            if (hadConnectionError) {
+              hadConnectionError = false
+              backfillMessages()
+            }
+          }
+        })
     }
 
-    subscribeToMessages()
+    subscribeToMessages().catch((subscribeError) => {
+      if (cancelled) return
+      console.error('Failed to subscribe to realtime messages:', subscribeError)
+      setConnectionError(true)
+    })
 
     return () => {
       cancelled = true
@@ -121,11 +174,9 @@ export function ChatThread({
         return
       }
 
-      const { error: readError } = await supabase
-        .from('conversation_participants')
-        .update({ last_read_at: new Date().toISOString() })
-        .eq('conversation_id', conversationId)
-        .eq('user_id', currentUserId)
+      const { error: readError } = await supabase.rpc('mark_conversation_read', {
+        p_conversation_id: conversationId,
+      })
 
       if (readError) {
         // The message itself was already sent successfully (visible via realtime to
@@ -144,6 +195,11 @@ export function ChatThread({
 
   return (
     <div className="flex flex-col gap-4">
+      {connectionError && (
+        <p className="text-sm text-destructive">
+          Koneksi real-time terputus. Muat ulang halaman untuk melihat pesan terbaru.
+        </p>
+      )}
       <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto rounded border p-3">
         {messages.length === 0 && (
           <li className="text-sm text-muted-foreground">Belum ada pesan. Mulai percakapan.</li>

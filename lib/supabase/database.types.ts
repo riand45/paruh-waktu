@@ -997,6 +997,10 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: boolean
       }
+      mark_conversation_read: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
       mark_withdrawal_paid: {
         Args: { p_transfer_proof_path: string; p_withdrawal_id: string }
         Returns: undefined

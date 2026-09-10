@@ -19,7 +19,16 @@ export default async function JobChatPage({
     notFound()
   }
 
-  await markConversationRead(conversation.id)
+  try {
+    await markConversationRead(conversation.id)
+  } catch (error) {
+    // Same reasoning as chat-thread.tsx's post-send read-marking step: this only
+    // affects whether the conversation shows as "unread" on the /chat list page,
+    // and the messages below have already loaded successfully. This app has no
+    // error.tsx, so letting this throw would take the whole page down to a 500
+    // over a purely cosmetic failure. Log it for visibility and keep rendering.
+    console.error('Failed to mark conversation as read:', error)
+  }
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-10">
