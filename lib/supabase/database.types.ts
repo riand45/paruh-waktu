@@ -989,12 +989,33 @@ export type Database = {
       confirm_job_completion: { Args: { p_job_id: string }; Returns: undefined }
       get_or_create_payment: { Args: { p_job_id: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      mark_withdrawal_paid: {
+        Args: { p_transfer_proof_path: string; p_withdrawal_id: string }
+        Returns: undefined
+      }
+      process_withdrawal: {
+        Args: { p_withdrawal_id: string }
+        Returns: undefined
+      }
       record_job_evidence: {
         Args: {
           p_file_path: string
           p_file_size_bytes: number
           p_file_type: string
           p_job_id: string
+        }
+        Returns: string
+      }
+      reject_withdrawal: {
+        Args: { p_rejection_reason: string; p_withdrawal_id: string }
+        Returns: undefined
+      }
+      request_withdrawal: {
+        Args: {
+          p_account_holder_name: string
+          p_account_number: string
+          p_amount: number
+          p_bank_name: string
         }
         Returns: string
       }
