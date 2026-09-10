@@ -244,6 +244,7 @@ export interface JobDetail {
   deadline: string
   status: string
   employerId: string
+  assignedWorkerId: string | null
 }
 
 export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
@@ -300,5 +301,6 @@ export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
     deadline: job.deadline,
     status: job.status,
     employerId: job.employer_id,
+    assignedWorkerId: job.assigned_worker_id,
   }
 }
