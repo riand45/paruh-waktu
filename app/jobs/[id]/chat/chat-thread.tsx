@@ -82,26 +82,37 @@ export function ChatThread({
     setIsSending(true)
     const supabase = createClient()
 
-    const { error: insertError } = await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: currentUserId,
-      body: validated.data.body,
-    })
+    try {
+      const { error: insertError } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: currentUserId,
+        body: validated.data.body,
+      })
 
-    if (insertError) {
-      setError('Gagal mengirim pesan.')
+      if (insertError) {
+        setError('Gagal mengirim pesan.')
+        return
+      }
+
+      const { error: readError } = await supabase
+        .from('conversation_participants')
+        .update({ last_read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', currentUserId)
+
+      if (readError) {
+        // The message itself was already sent successfully (visible via realtime to
+        // both parties) — this update is a secondary, non-fatal step that only affects
+        // whether this conversation shows as "unread" to the sender on the /chat list
+        // page. Log it for visibility, but don't surface a user-facing error for a
+        // message that did, in fact, send.
+        console.error('Failed to update last_read_at after sending message:', readError)
+      }
+
+      setBody('')
+    } finally {
       setIsSending(false)
-      return
     }
-
-    await supabase
-      .from('conversation_participants')
-      .update({ last_read_at: new Date().toISOString() })
-      .eq('conversation_id', conversationId)
-      .eq('user_id', currentUserId)
-
-    setBody('')
-    setIsSending(false)
   }
 
   return (
