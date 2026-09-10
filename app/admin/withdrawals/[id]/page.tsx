@@ -26,6 +26,7 @@ export default async function AdminWithdrawalDetailPage({
       .createSignedUrl(withdrawal.transferProofPath, 60)
     signedUrl = data?.signedUrl ?? null
   }
+  const isImage = /\.(jpg|jpeg|png)$/i.test(withdrawal.transferProofPath ?? '')
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
@@ -58,13 +59,15 @@ export default async function AdminWithdrawalDetailPage({
           </div>
         )}
       </dl>
-      {signedUrl && (
+      {withdrawal.transferProofPath && (
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium">Bukti Transfer</span>
-          {/\.(jpg|jpeg|png)$/i.test(withdrawal.transferProofPath ?? '') ? (
+          {!signedUrl && <p className="text-sm text-destructive">Gagal memuat bukti transfer.</p>}
+          {signedUrl && isImage && (
             // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL, not a static/optimizable asset
             <img src={signedUrl} alt="Bukti transfer" className="max-w-full rounded border" />
-          ) : (
+          )}
+          {signedUrl && !isImage && (
             <a
               href={signedUrl}
               target="_blank"

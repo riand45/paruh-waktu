@@ -27,6 +27,16 @@ describe('RequestWithdrawalSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('rejects an amount with 3 decimal places', () => {
+    const result = RequestWithdrawalSchema.safeParse({ ...validInput, amount: '100000.005' })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts an amount with exactly 2 decimal places', () => {
+    const result = RequestWithdrawalSchema.safeParse({ ...validInput, amount: '100000.50' })
+    expect(result.success).toBe(true)
+  })
+
   it('rejects a blank bank name', () => {
     const result = RequestWithdrawalSchema.safeParse({ ...validInput, bankName: '   ' })
     expect(result.success).toBe(false)

@@ -99,15 +99,22 @@ export default async function WalletPage() {
               {withdrawal.status === 'rejected' && withdrawal.rejectionReason && (
                 <p className="text-sm text-destructive">Alasan penolakan: {withdrawal.rejectionReason}</p>
               )}
-              {withdrawal.status === 'paid' && withdrawal.signedUrl && (
-                <a
-                  href={withdrawal.signedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  Lihat Bukti Transfer
-                </a>
+              {withdrawal.status === 'paid' && withdrawal.transferProofPath && (
+                <>
+                  {!withdrawal.signedUrl && (
+                    <p className="text-sm text-destructive">Gagal memuat bukti transfer.</p>
+                  )}
+                  {withdrawal.signedUrl && (
+                    <a
+                      href={withdrawal.signedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary underline-offset-4 hover:underline"
+                    >
+                      Lihat Bukti Transfer
+                    </a>
+                  )}
+                </>
               )}
             </li>
           ))}
