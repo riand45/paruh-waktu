@@ -112,6 +112,11 @@ export default async function JobDetailPage({
             Lihat Progres Pekerjaan
           </Link>
         )}
+      {job.assignedWorkerId !== null && (isOwner || job.assignedWorkerId === user?.id) && (
+        <Link href={`/jobs/${job.id}/chat`} className="text-sm text-primary underline-offset-4 hover:underline">
+          Chat
+        </Link>
+      )}
       {!isOwner && myApplication && !canApply && (
         <div className="flex flex-col gap-2 rounded border p-3 text-sm">
           <span className="text-muted-foreground">Status Lamaran Anda</span>
