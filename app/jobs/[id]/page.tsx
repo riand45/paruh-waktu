@@ -99,6 +99,7 @@ export default async function JobDetailPage({
           'in_progress',
           'waiting_confirmation',
           'completed',
+          'cancelled',
         ].includes(job.status) && (
           <Link
             href={`/jobs/${job.id}/payment`}
