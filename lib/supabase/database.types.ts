@@ -644,6 +644,9 @@ export type Database = {
           id: string
           job_id: string
           platform_fee: number
+          refund_transfer_proof_path: string | null
+          refunded_at: string | null
+          refunded_by: string | null
           rejection_reason: string | null
           status: string
           total_amount: number
@@ -660,6 +663,9 @@ export type Database = {
           id?: string
           job_id: string
           platform_fee: number
+          refund_transfer_proof_path?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           rejection_reason?: string | null
           status?: string
           total_amount: number
@@ -676,6 +682,9 @@ export type Database = {
           id?: string
           job_id?: string
           platform_fee?: number
+          refund_transfer_proof_path?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           rejection_reason?: string | null
           status?: string
           total_amount?: number
@@ -697,6 +706,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: true
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_refunded_by_fkey"
+            columns: ["refunded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -986,6 +1002,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_user: { Args: { p_user_id: string }; Returns: undefined }
+      cancel_job_and_refund: {
+        Args: { p_job_id: string; p_reason: string }
+        Returns: undefined
+      }
       confirm_job_completion: { Args: { p_job_id: string }; Returns: undefined }
       get_or_create_conversation: {
         Args: { p_job_id: string }
@@ -999,6 +1020,10 @@ export type Database = {
       }
       mark_conversation_read: {
         Args: { p_conversation_id: string }
+        Returns: undefined
+      }
+      mark_refund_paid: {
+        Args: { p_payment_id: string; p_transfer_proof_path: string }
         Returns: undefined
       }
       mark_withdrawal_paid: {
@@ -1062,6 +1087,7 @@ export type Database = {
         }
         Returns: string
       }
+      suspend_user: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
