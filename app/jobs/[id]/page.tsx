@@ -58,6 +58,12 @@ export default async function JobDetailPage({
           <dt className="text-muted-foreground">Status</dt>
           <dd>{job.status}</dd>
         </div>
+        {job.status === 'cancelled' && job.cancelledReason && (
+          <div>
+            <dt className="text-muted-foreground">Alasan Pembatalan</dt>
+            <dd>{job.cancelledReason}</dd>
+          </div>
+        )}
       </dl>
       <a
         href={mapsUrl}

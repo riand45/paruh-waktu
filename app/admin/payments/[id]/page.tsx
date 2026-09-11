@@ -3,6 +3,8 @@ import { requireAdminOr404 } from '@/lib/auth/get-current-user'
 import { getPaymentDetailForAdmin } from '@/lib/services/payments'
 import { createClient } from '@/lib/supabase/server'
 import { ReviewForm } from './review-form'
+import { CancelRefundForm } from './cancel-refund-form'
+import { RefundProofForm } from './refund-proof-form'
 
 export default async function AdminPaymentDetailPage({
   params,
@@ -92,6 +94,18 @@ export default async function AdminPaymentDetailPage({
         })}
       </div>
       {payment.status === 'waiting_verification' && <ReviewForm paymentId={payment.id} />}
+      {payment.status === 'verified' && payment.jobStatus !== 'completed' && (
+        <CancelRefundForm jobId={payment.jobId} />
+      )}
+      {payment.status === 'refund_pending' && <RefundProofForm paymentId={payment.id} />}
+      {payment.status === 'refunded' && payment.refundTransferProofPath && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Bukti Refund</span>
+          <span className="text-xs text-muted-foreground">
+            Direfund {payment.refundedAt ? new Date(payment.refundedAt).toLocaleString('id-ID') : '-'}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
