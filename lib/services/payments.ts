@@ -14,6 +14,8 @@ export interface PaymentDetail {
   status: string
   transferDate: string | null
   rejectionReason: string | null
+  refundTransferProofPath: string | null
+  refundedAt: string | null
 }
 
 interface PaymentRow {
@@ -26,6 +28,8 @@ interface PaymentRow {
   status: string
   transfer_date: string | null
   rejection_reason: string | null
+  refund_transfer_proof_path: string | null
+  refunded_at: string | null
 }
 
 function mapPaymentRow(row: PaymentRow): PaymentDetail {
@@ -39,6 +43,8 @@ function mapPaymentRow(row: PaymentRow): PaymentDetail {
     status: row.status,
     transferDate: row.transfer_date,
     rejectionReason: row.rejection_reason,
+    refundTransferProofPath: row.refund_transfer_proof_path,
+    refundedAt: row.refunded_at,
   }
 }
 
@@ -64,7 +70,7 @@ export async function getPaymentForJob(jobId: string): Promise<PaymentDetail | n
 
   const { data, error } = await supabase
     .from('payments')
-    .select('id, job_id, amount, platform_fee, total_amount, fee_payer, status, transfer_date, rejection_reason')
+    .select('id, job_id, amount, platform_fee, total_amount, fee_payer, status, transfer_date, rejection_reason, refund_transfer_proof_path, refunded_at')
     .eq('job_id', jobId)
     .maybeSingle()
 
@@ -191,6 +197,7 @@ export async function getPendingPayments(): Promise<PendingPaymentSummary[]> {
 
 export interface AdminPaymentDetail extends PaymentDetail {
   jobTitle: string
+  jobStatus: string
   employerName: string
   proofs: { id: string; filePath: string; uploadedAt: string }[]
 }
@@ -202,7 +209,7 @@ export async function getPaymentDetailForAdmin(paymentId: string): Promise<Admin
   const { data: payment, error } = await supabase
     .from('payments')
     .select(
-      'id, job_id, employer_id, amount, platform_fee, total_amount, fee_payer, status, transfer_date, rejection_reason'
+      'id, job_id, employer_id, amount, platform_fee, total_amount, fee_payer, status, transfer_date, rejection_reason, refund_transfer_proof_path, refunded_at'
     )
     .eq('id', paymentId)
     .maybeSingle()
@@ -213,7 +220,7 @@ export async function getPaymentDetailForAdmin(paymentId: string): Promise<Admin
 
   const { data: job, error: jobError } = await supabase
     .from('jobs')
-    .select('title')
+    .select('title, status')
     .eq('id', payment.job_id)
     .maybeSingle()
   if (jobError) {
@@ -242,6 +249,7 @@ export async function getPaymentDetailForAdmin(paymentId: string): Promise<Admin
   return {
     ...mapPaymentRow(payment),
     jobTitle: job?.title ?? 'Pekerjaan tidak diketahui',
+    jobStatus: job?.status ?? 'unknown',
     employerName: profile?.full_name ?? 'Tidak diketahui',
     proofs: (proofs ?? []).map((proof) => ({
       id: proof.id,
