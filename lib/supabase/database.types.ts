@@ -1003,11 +1003,16 @@ export type Database = {
     }
     Functions: {
       activate_user: { Args: { p_user_id: string }; Returns: undefined }
+      cancel_job: {
+        Args: { p_job_id: string; p_reason: string }
+        Returns: undefined
+      }
       cancel_job_and_refund: {
         Args: { p_job_id: string; p_reason: string }
         Returns: undefined
       }
       confirm_job_completion: { Args: { p_job_id: string }; Returns: undefined }
+      create_job_category: { Args: { p_name: string }; Returns: string }
       get_or_create_conversation: {
         Args: { p_job_id: string }
         Returns: string
@@ -1076,6 +1081,10 @@ export type Database = {
         Args: { p_application_id: string; p_job_id: string }
         Returns: undefined
       }
+      set_job_category_active: {
+        Args: { p_id: string; p_is_active: boolean }
+        Returns: undefined
+      }
       start_work: { Args: { p_job_id: string }; Returns: undefined }
       submit_job_completion: { Args: { p_job_id: string }; Returns: undefined }
       submit_payment_proof: {
@@ -1088,6 +1097,14 @@ export type Database = {
         Returns: string
       }
       suspend_user: { Args: { p_user_id: string }; Returns: undefined }
+      update_job_category: {
+        Args: { p_id: string; p_name: string }
+        Returns: undefined
+      }
+      update_platform_setting: {
+        Args: { p_key: string; p_value: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
