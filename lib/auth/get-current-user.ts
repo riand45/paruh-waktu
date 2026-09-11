@@ -2,6 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { hasRole, type AppRole } from './has-role'
 import { appError } from '@/lib/errors'
 
@@ -16,6 +17,25 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data } = await supabase.auth.getClaims()
   const claims = data?.claims
   if (!claims) return null
+
+  // account_status has no SELECT grant for the auth-context client at all
+  // (supabase/migrations/20260907120918_profiles_column_grant_restriction.sql),
+  // so this must go through the service-role client. A suspended user is
+  // treated exactly like a logged-out one -- every existing caller already
+  // handles a null CurrentUser, so this is full lockout everywhere at once.
+  const serviceClient = createServiceClient()
+  const { data: profile, error: profileError } = await serviceClient
+    .from('profiles')
+    .select('account_status')
+    .eq('id', claims.sub)
+    .maybeSingle()
+
+  if (profileError) {
+    throw new Error('Failed to load account status for the current user.')
+  }
+  if (profile?.account_status === 'suspended') {
+    return null
+  }
 
   const { data: roleRows, error } = await supabase
     .from('user_roles')
