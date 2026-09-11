@@ -246,6 +246,7 @@ export interface JobDetail {
   employerId: string
   assignedWorkerId: string | null
   cancelledReason: string | null
+  createdAt: string
 }
 
 export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
@@ -258,7 +259,7 @@ export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
   const { data: job, error } = await supabase
     .from('jobs')
     .select(
-      'id, title, description, address, latitude, longitude, category_id, payment_amount, duration_minutes, deadline, status, employer_id, assigned_worker_id, cancelled_reason'
+      'id, title, description, address, latitude, longitude, category_id, payment_amount, duration_minutes, deadline, status, employer_id, assigned_worker_id, cancelled_reason, created_at'
     )
     .eq('id', jobId)
     .maybeSingle()
@@ -304,5 +305,6 @@ export async function getJobDetail(jobId: string): Promise<JobDetail | null> {
     employerId: job.employer_id,
     assignedWorkerId: job.assigned_worker_id,
     cancelledReason: job.cancelled_reason,
+    createdAt: job.created_at,
   }
 }

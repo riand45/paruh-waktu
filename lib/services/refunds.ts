@@ -13,8 +13,8 @@ function mapCancelJobAndRefundError(message: string): Error {
   if (message.includes('payment not verified')) {
     return appError('CONFLICT', 'Pembayaran ini belum terverifikasi.')
   }
-  if (message.includes('job already completed')) {
-    return appError('CONFLICT', 'Pekerjaan ini sudah selesai dan tidak dapat dibatalkan.')
+  if (message.includes('already cancelled or completed')) {
+    return appError('CONFLICT', 'Pekerjaan ini sudah dibatalkan atau selesai.')
   }
   return appError('INTERNAL_ERROR')
 }
