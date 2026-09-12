@@ -82,6 +82,9 @@ export async function getPaymentForJob(jobId: string): Promise<PaymentDetail | n
 }
 
 function mapSubmitProofError(message: string): Error {
+  if (message.includes('job cancelled')) {
+    return appError('CONFLICT', 'Pekerjaan ini sudah dibatalkan.')
+  }
   if (message.includes('FORBIDDEN')) {
     return appError('FORBIDDEN')
   }
@@ -260,6 +263,9 @@ export async function getPaymentDetailForAdmin(paymentId: string): Promise<Admin
 }
 
 function mapReviewPaymentError(message: string): Error {
+  if (message.includes('job cancelled')) {
+    return appError('CONFLICT', 'Pekerjaan ini sudah dibatalkan.')
+  }
   if (message.includes('FORBIDDEN')) {
     return appError('FORBIDDEN')
   }
