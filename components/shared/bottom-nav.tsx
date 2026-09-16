@@ -24,7 +24,10 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background">
+    <nav
+      aria-label="Navigasi utama"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[env(safe-area-inset-bottom)]"
+    >
       <ul className="mx-auto flex max-w-md items-stretch justify-between">
         {TABS.map((tab) => {
           const isActive = pathname.startsWith(tab.href)
@@ -33,6 +36,7 @@ export function BottomNav() {
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex flex-col items-center gap-1 py-2 text-xs',
                   isActive ? 'text-primary' : 'text-muted-foreground'

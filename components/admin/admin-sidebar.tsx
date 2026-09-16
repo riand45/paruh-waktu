@@ -51,7 +51,12 @@ export function AdminSidebar() {
     <div className="border-b md:w-56 md:flex-shrink-0 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between px-4 py-3 md:hidden">
         <span className="text-sm font-semibold">Admin Panel</span>
-        <button type="button" onClick={() => setIsOpen((open) => !open)} aria-label="Buka menu admin">
+        <button
+          type="button"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-label={isOpen ? 'Tutup menu admin' : 'Buka menu admin'}
+          aria-expanded={isOpen}
+        >
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
