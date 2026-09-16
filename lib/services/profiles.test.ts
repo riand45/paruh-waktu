@@ -26,12 +26,10 @@ function makeAvatarFile(): File {
   return new File([new Uint8Array(1024)], 'avatar.png', { type: 'image/png' })
 }
 
-function mockAuthClient(uploadError: { message: string } | null) {
+function mockAuthClient(upload: ReturnType<typeof vi.fn>) {
   return {
     storage: {
-      from: () => ({
-        upload: vi.fn().mockResolvedValue({ error: uploadError }),
-      }),
+      from: () => ({ upload }),
     },
   } as unknown as Awaited<ReturnType<typeof createClient>>
 }
@@ -53,6 +51,9 @@ function mockServiceClient(updateError: { message: string } | null = null) {
 
 describe('updateOwnAvatar', () => {
   beforeEach(() => {
+    vi.mocked(getCurrentUser).mockReset()
+    vi.mocked(createClient).mockReset()
+    vi.mocked(createServiceClient).mockReset()
     vi.mocked(getCurrentUser).mockResolvedValue({
       id: OWN_USER_ID,
       email: 'user@example.com',
@@ -61,23 +62,33 @@ describe('updateOwnAvatar', () => {
   })
 
   it("uploads to a path scoped to the authenticated user's own id and returns the public URL", async () => {
-    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null))
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(upload))
     vi.mocked(createServiceClient).mockReturnValue(mockServiceClient())
 
-    const result = await updateOwnAvatar(makeAvatarFile())
+    const file = makeAvatarFile()
+    const result = await updateOwnAvatar(file)
 
     expect(result).toBe(PUBLIC_URL)
+    expect(upload).toHaveBeenCalledTimes(1)
+    expect(upload).toHaveBeenCalledWith(
+      expect.stringMatching(new RegExp(`^${OWN_USER_ID}/\\d+-avatar\\.png$`)),
+      file,
+      { contentType: 'image/png', upsert: true }
+    )
   })
 
   it('throws when the storage upload fails', async () => {
-    vi.mocked(createClient).mockResolvedValue(mockAuthClient({ message: 'boom' }))
+    const upload = vi.fn().mockResolvedValue({ error: { message: 'boom' } })
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(upload))
     vi.mocked(createServiceClient).mockReturnValue(mockServiceClient())
 
     await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
   })
 
   it('throws when the profiles update fails', async () => {
-    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null))
+    const upload = vi.fn().mockResolvedValue({ error: null })
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(upload))
     vi.mocked(createServiceClient).mockReturnValue(mockServiceClient({ message: 'boom' }))
 
     await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
@@ -85,7 +96,10 @@ describe('updateOwnAvatar', () => {
 
   it('rejects an unauthenticated caller before touching storage', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
+    const upload = vi.fn()
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(upload))
 
     await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
+    expect(upload).not.toHaveBeenCalled()
   })
 })
