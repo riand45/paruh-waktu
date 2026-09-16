@@ -14,6 +14,12 @@ export interface UploadCeiling {
   allowedTypes: string[]
 }
 
+// Every ceiling below must stay under the two framework body-size caps
+// configured in next.config.ts (experimental.serverActions.bodySizeLimit
+// and experimental.proxyClientMaxBodySize, both "25mb") -- see the guard
+// test below. Exceeding either framework cap doesn't produce a clean
+// error; it silently truncates the request body, which then crashes the
+// multipart form parser downstream.
 export const UPLOAD_CEILINGS: Record<UploadContext, UploadCeiling> = {
   avatar: { maxSizeBytes: 5 * 1024 * 1024, allowedTypes: ['image/jpeg', 'image/png', 'image/webp'] },
   ktp: { maxSizeBytes: 10 * 1024 * 1024, allowedTypes: ['image/jpeg', 'image/png', 'application/pdf'] },

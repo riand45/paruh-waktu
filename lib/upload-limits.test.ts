@@ -60,3 +60,10 @@ describe('validateUploadedFile', () => {
     )
   })
 })
+
+describe('framework body-size caps', () => {
+  it('keeps every ceiling below the 25mb caps configured in next.config.ts', () => {
+    const largest = Math.max(...Object.values(UPLOAD_CEILINGS).map((c) => c.maxSizeBytes))
+    expect(largest).toBeLessThan(25 * 1024 * 1024)
+  })
+})
