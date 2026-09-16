@@ -5,7 +5,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await requireAdminOr404()
 
   return (
-    <div className="flex min-h-full flex-col md:flex-row">
+    <div className="flex min-h-full flex-1 flex-col md:flex-row">
       <AdminSidebar />
       <div className="flex-1">{children}</div>
     </div>
