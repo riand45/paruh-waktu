@@ -10,6 +10,7 @@ export default async function ProfilePage() {
   const profile = await getOwnProfile()
   const currentUser = await getCurrentUser()
   const isEmployer = currentUser?.roles.includes('employer') ?? false
+  const isAdmin = currentUser?.roles.includes('admin') ?? false
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
@@ -40,6 +41,11 @@ export default async function ProfilePage() {
             Pekerjaan Saya
           </Link>
         </>
+      )}
+      {isAdmin && (
+        <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
+          Panel Admin
+        </Link>
       )}
       <ProfileForm profile={profile} />
     </div>
