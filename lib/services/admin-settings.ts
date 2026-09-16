@@ -75,3 +75,32 @@ export async function updatePlatformSettings(input: PlatformSettingsInput): Prom
     }
   }
 }
+
+export interface UploadSettings {
+  maxUploadSizeMb: number
+  allowedFileTypes: string[]
+}
+
+// No requireRole('admin') here: platform_settings' own RLS policy
+// (platform_settings_select_authenticated, `to authenticated using (true)`)
+// already permits every signed-in user to read it -- the admin-only gate on
+// getAllPlatformSettings above is an app-level choice for the settings-editing
+// page, not a database restriction. Every upload action needs this read
+// regardless of the caller's role.
+export async function getUploadSettings(): Promise<UploadSettings> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .select('key, value')
+    .in('key', ['max_upload_size_mb', 'allowed_file_types'])
+
+  if (error) {
+    throw appError('INTERNAL_ERROR')
+  }
+
+  const valueByKey = new Map((data ?? []).map((row) => [row.key, row.value]))
+  return {
+    maxUploadSizeMb: Number(valueByKey.get('max_upload_size_mb') ?? 5),
+    allowedFileTypes: (valueByKey.get('allowed_file_types') ?? []) as string[],
+  }
+}
