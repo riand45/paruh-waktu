@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { getJobDetail } from '@/lib/services/jobs'
 import { getMyApplicationForJob } from '@/lib/services/applications'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
-import { ApplyForm } from '@/app/applications/apply-form'
-import { cancelApplicationAction } from '@/app/applications/actions'
+import { ApplyForm } from '@/app/(main)/applications/apply-form'
+import { cancelApplicationAction } from '@/app/(main)/applications/actions'
 import { Button } from '@/components/ui/button'
 
 export default async function JobDetailPage({
