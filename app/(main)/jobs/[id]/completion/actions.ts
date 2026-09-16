@@ -7,9 +7,7 @@ import {
   confirmJobCompletion,
 } from '@/lib/services/completions'
 import { toSafeErrorMessage } from '@/lib/errors'
-
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4']
+import { getEffectiveUploadLimits, validateUploadedFile } from '@/lib/upload-limits'
 
 export type EvidenceUploadFormState =
   | {
@@ -29,11 +27,10 @@ export async function recordJobEvidenceAction(
   if (!(file instanceof File) || file.size === 0) {
     return { errors: { file: ['Bukti pekerjaan wajib diunggah.'] } }
   }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return { errors: { file: ['Format file harus JPEG, PNG, WebP, atau MP4.'] } }
-  }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { errors: { file: ['Ukuran file maksimal 20MB.'] } }
+  const limits = await getEffectiveUploadLimits('jobEvidence')
+  const validationError = validateUploadedFile(file, limits)
+  if (validationError) {
+    return { errors: { file: [validationError] } }
   }
 
   try {

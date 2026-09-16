@@ -7,9 +7,7 @@ import {
   type SubmitEmployerVerificationFormState,
 } from '@/lib/validations/employer-verification'
 import { toSafeErrorMessage } from '@/lib/errors'
-
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
+import { getEffectiveUploadLimits, validateUploadedFile } from '@/lib/upload-limits'
 
 export async function submitEmployerVerificationAction(
   _prevState: SubmitEmployerVerificationFormState,
@@ -28,11 +26,10 @@ export async function submitEmployerVerificationAction(
   if (!(file instanceof File) || file.size === 0) {
     return { errors: { file: ['Dokumen KTP wajib diunggah.'] } }
   }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return { errors: { file: ['Format file harus JPEG, PNG, atau PDF.'] } }
-  }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { errors: { file: ['Ukuran file maksimal 10MB.'] } }
+  const limits = await getEffectiveUploadLimits('ktp')
+  const validationError = validateUploadedFile(file, limits)
+  if (validationError) {
+    return { errors: { file: [validationError] } }
   }
 
   try {
