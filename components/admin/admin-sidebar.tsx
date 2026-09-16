@@ -62,6 +62,7 @@ export function AdminSidebar() {
             <Link
               key={section.href}
               href={section.href}
+              onClick={() => setIsOpen(false)}
               className={cn(
                 'flex items-center gap-2 rounded px-3 py-2 text-sm',
                 isActive(section) ? 'bg-muted font-medium' : 'text-muted-foreground hover:bg-muted'
@@ -74,6 +75,7 @@ export function AdminSidebar() {
         })}
         <Link
           href="/jobs"
+          onClick={() => setIsOpen(false)}
           className="mt-4 flex items-center gap-2 rounded px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" />
