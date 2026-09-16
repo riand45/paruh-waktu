@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { updateOwnAvatar, updateOwnProfile } from '@/lib/services/profiles'
 import { UpdateProfileSchema, type UpdateProfileFormState } from '@/lib/validations/profile'
 import { toSafeErrorMessage } from '@/lib/errors'
+import { getEffectiveUploadLimits, validateUploadedFile } from '@/lib/upload-limits'
 
 export async function updateProfileAction(
   _prevState: UpdateProfileFormState,
@@ -29,12 +30,25 @@ export async function updateProfileAction(
   return { status: 'success', message: 'Profil berhasil diperbarui.' }
 }
 
-export async function updateAvatarAction(path: string) {
+export async function updateAvatarAction(
+  formData: FormData
+): Promise<{ success: true; avatarUrl: string } | { success: false; message: string }> {
+  const file = formData.get('file')
+  if (!(file instanceof File) || file.size === 0) {
+    return { success: false, message: 'Foto wajib diunggah.' }
+  }
+
+  const limits = await getEffectiveUploadLimits('avatar')
+  const validationError = validateUploadedFile(file, limits)
+  if (validationError) {
+    return { success: false, message: validationError }
+  }
+
   try {
-    const avatarUrl = await updateOwnAvatar(path)
+    const avatarUrl = await updateOwnAvatar(file)
     revalidatePath('/profile')
-    return { success: true as const, avatarUrl }
+    return { success: true, avatarUrl }
   } catch (error) {
-    return { success: false as const, message: toSafeErrorMessage(error) }
+    return { success: false, message: toSafeErrorMessage(error) }
   }
 }

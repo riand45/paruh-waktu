@@ -1,5 +1,6 @@
 import 'server-only'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { appError } from '@/lib/errors'
 import { UpdateProfileSchema } from '@/lib/validations/profile'
@@ -75,32 +76,28 @@ export async function updateOwnProfile(input: UpdateProfileInput): Promise<void>
   }
 }
 
-export async function updateOwnAvatar(path: string): Promise<string> {
+export async function updateOwnAvatar(file: File): Promise<string> {
   const user = await getCurrentUser()
   if (!user) {
     throw appError('UNAUTHENTICATED')
   }
 
-  const segments = path.split('/')
-  const filename = segments[1]
-  const isOwnFolder =
-    segments.length === 2 &&
-    segments[0] === user.id &&
-    filename.length > 0 &&
-    filename !== '.' &&
-    filename !== '..'
-  if (!isOwnFolder) {
-    throw appError('FORBIDDEN', 'Anda hanya dapat mengubah avatar Anda sendiri.')
+  const supabase = await createClient()
+  const path = `${user.id}/${Date.now()}-${file.name}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { contentType: file.type, upsert: true })
+
+  if (uploadError) {
+    throw appError('INTERNAL_ERROR', 'Gagal mengunggah avatar.')
   }
 
-  const supabase = createServiceClient()
-  const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(path)
+  const serviceClient = createServiceClient()
+  const { data: publicUrlData } = serviceClient.storage.from('avatars').getPublicUrl(path)
   const avatarUrl = publicUrlData.publicUrl
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ avatar_url: avatarUrl })
-    .eq('id', user.id)
+  const { error } = await serviceClient.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id)
 
   if (error) {
     throw appError('INTERNAL_ERROR')

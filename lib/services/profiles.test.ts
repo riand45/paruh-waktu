@@ -6,19 +6,37 @@ vi.mock('@/lib/auth/get-current-user', () => ({
   getCurrentUser: vi.fn(),
 }))
 
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}))
+
 vi.mock('@/lib/supabase/service', () => ({
   createServiceClient: vi.fn(),
 }))
 
 import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { updateOwnAvatar } from './profiles'
 
 const OWN_USER_ID = 'aaaaaaaa-1111-2222-3333-444444444444'
-const OTHER_USER_ID = 'bbbbbbbb-5555-6666-7777-888888888888'
 const PUBLIC_URL = 'https://example.supabase.co/storage/v1/object/public/avatars/avatar.png'
 
-function mockServiceClient() {
+function makeAvatarFile(): File {
+  return new File([new Uint8Array(1024)], 'avatar.png', { type: 'image/png' })
+}
+
+function mockAuthClient(uploadError: { message: string } | null) {
+  return {
+    storage: {
+      from: () => ({
+        upload: vi.fn().mockResolvedValue({ error: uploadError }),
+      }),
+    },
+  } as unknown as Awaited<ReturnType<typeof createClient>>
+}
+
+function mockServiceClient(updateError: { message: string } | null = null) {
   return {
     storage: {
       from: () => ({
@@ -27,7 +45,7 @@ function mockServiceClient() {
     },
     from: () => ({
       update: () => ({
-        eq: () => ({ error: null }),
+        eq: () => ({ error: updateError }),
       }),
     }),
   } as unknown as ReturnType<typeof createServiceClient>
@@ -40,33 +58,34 @@ describe('updateOwnAvatar', () => {
       email: 'user@example.com',
       roles: [],
     })
+  })
+
+  it("uploads to a path scoped to the authenticated user's own id and returns the public URL", async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null))
     vi.mocked(createServiceClient).mockReturnValue(mockServiceClient())
+
+    const result = await updateOwnAvatar(makeAvatarFile())
+
+    expect(result).toBe(PUBLIC_URL)
   })
 
-  it('accepts a legitimate path in the user\'s own folder', async () => {
-    await expect(updateOwnAvatar(`${OWN_USER_ID}/photo.png`)).resolves.toBe(PUBLIC_URL)
+  it('throws when the storage upload fails', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient({ message: 'boom' }))
+    vi.mocked(createServiceClient).mockReturnValue(mockServiceClient())
+
+    await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
   })
 
-  it('rejects a path traversal attempt into another user\'s folder', async () => {
-    await expect(
-      updateOwnAvatar(`${OWN_USER_ID}/../${OTHER_USER_ID}/x.png`)
-    ).rejects.toThrow()
+  it('throws when the profiles update fails', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null))
+    vi.mocked(createServiceClient).mockReturnValue(mockServiceClient({ message: 'boom' }))
+
+    await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
   })
 
-  it('rejects a path directly under a different user\'s folder', async () => {
-    await expect(updateOwnAvatar(`${OTHER_USER_ID}/x.png`)).rejects.toThrow()
-  })
+  it('rejects an unauthenticated caller before touching storage', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(null)
 
-  it('accepts realistic filenames with spaces, parens, and unicode', async () => {
-    await expect(
-      updateOwnAvatar(`${OWN_USER_ID}/Screenshot 2024-01-01 at 10.23.45.png`)
-    ).resolves.toBe(PUBLIC_URL)
-    await expect(updateOwnAvatar(`${OWN_USER_ID}/IMG (1).jpg`)).resolves.toBe(PUBLIC_URL)
-    await expect(updateOwnAvatar(`${OWN_USER_ID}/café.png`)).resolves.toBe(PUBLIC_URL)
-  })
-
-  it('rejects a bare "." or ".." as the filename segment', async () => {
-    await expect(updateOwnAvatar(`${OWN_USER_ID}/..`)).rejects.toThrow()
-    await expect(updateOwnAvatar(`${OWN_USER_ID}/.`)).rejects.toThrow()
+    await expect(updateOwnAvatar(makeAvatarFile())).rejects.toThrow()
   })
 })

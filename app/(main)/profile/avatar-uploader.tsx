@@ -1,21 +1,16 @@
 'use client'
 
 import { useRef, useState, useTransition, type ChangeEvent } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { updateAvatarAction } from './actions'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+// Client-side pre-check only, for instant feedback -- the server performs
+// the authoritative check against the live admin-configured settings.
+const CLIENT_PRECHECK_MAX_BYTES = 5 * 1024 * 1024
+const CLIENT_PRECHECK_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-export function AvatarUploader({
-  userId,
-  currentAvatarUrl,
-}: {
-  userId: string
-  currentAvatarUrl: string | null
-}) {
+export function AvatarUploader({ currentAvatarUrl }: { currentAvatarUrl: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl)
   const [error, setError] = useState<string | null>(null)
@@ -29,30 +24,19 @@ export function AvatarUploader({
       inputRef.current.value = ''
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!CLIENT_PRECHECK_TYPES.includes(file.type)) {
       setError('Format file harus JPEG, PNG, atau WebP.')
       return
     }
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (file.size > CLIENT_PRECHECK_MAX_BYTES) {
       setError('Ukuran file maksimal 5MB.')
       return
     }
 
     startTransition(async () => {
-      const supabase = createClient()
-      const path = `${userId}/${Date.now()}-${file.name}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true })
-
-      if (uploadError) {
-        console.error('Avatar upload failed:', uploadError)
-        setError('Gagal mengunggah avatar. Silakan coba lagi.')
-        return
-      }
-
-      const result = await updateAvatarAction(path)
+      const formData = new FormData()
+      formData.set('file', file)
+      const result = await updateAvatarAction(formData)
       if (!result.success) {
         setError(result.message)
         return

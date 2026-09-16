@@ -22,7 +22,7 @@ export default async function ProfilePage() {
           </Button>
         </form>
       </div>
-      <AvatarUploader userId={profile.id} currentAvatarUrl={profile.avatarUrl} />
+      <AvatarUploader currentAvatarUrl={profile.avatarUrl} />
       <Link href="/verification" className="text-sm text-primary underline-offset-4 hover:underline">
         Ajukan jadi Pemberi Kerja
       </Link>
