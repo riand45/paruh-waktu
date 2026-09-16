@@ -110,7 +110,7 @@ At the bottom of the sidebar: a "Kembali ke Aplikasi" link to `/jobs`, the admin
 | Total Employer | `/admin/users?role=employer` |
 | Pekerjaan Aktif | `/admin/jobs` (unfiltered — no single-status match, §2) |
 | Pekerjaan Selesai | `/admin/jobs?status=completed` |
-| Pembayaran Menunggu Verifikasi | `/admin/payments` (already pre-scoped to pending verification by `getPendingPayments`) |
+| Pembayaran Menunggu Verifikasi | `/admin/payments` (the page shows every payment, sorted with pending-verification ones first — no query-param filter exists on this page, same as the withdrawals case above) |
 | Withdrawal Menunggu Proses | `/admin/withdrawals` (page has no status filter today; links to the full list) |
 
 Each tile becomes a `<Link>` wrapping the existing tile markup, no visual change beyond becoming clickable/hoverable.
