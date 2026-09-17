@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type * as L from 'leaflet'
-import { Marker } from 'react-leaflet'
+import { Marker, useMap } from 'react-leaflet'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { BaseMap, MapClickHandler, INDONESIA_CENTER, INDONESIA_DEFAULT_ZOOM } from './base-map'
@@ -14,6 +14,24 @@ export interface MapPickerValue {
 }
 
 const GEOCODE_DEBOUNCE_MS = 500
+
+// react-leaflet's <MapContainer> applies `center`/`zoom` only once, at mount --
+// they are not reactive props. Without this, searching an address, dragging the
+// marker or using "Gunakan Lokasi Saya" would move the marker while the visible
+// viewport stayed on the initial Indonesia-wide view, so the new pin would land
+// off-screen and the user would see nothing happen.
+//
+// The effect only runs after a state update has committed -- i.e. after the
+// click/drag/search/geolocate that produced the new coordinates has already
+// finished -- so it never fires mid-gesture and can't fight an in-progress drag.
+function RecenterOnChange({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap()
+  const [latitude, longitude] = center
+  useEffect(() => {
+    map.setView([latitude, longitude], zoom)
+  }, [map, latitude, longitude, zoom])
+  return null
+}
 
 export function MapPicker({
   value,
@@ -128,6 +146,7 @@ export function MapPicker({
       </div>
       <BaseMap center={center} zoom={zoom} className="h-64 w-full rounded-md">
         <MapClickHandler onClick={handleMapClick} />
+        <RecenterOnChange center={center} zoom={zoom} />
         {hasPosition && (
           <Marker
             position={center}

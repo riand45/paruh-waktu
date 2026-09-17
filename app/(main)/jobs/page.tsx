@@ -57,7 +57,9 @@ export default async function JobsPage({
       <Suspense fallback={<p className="text-sm text-muted-foreground">Memuat filter...</p>}>
         <JobFilters categories={categories} />
       </Suspense>
-      <JobsViewToggle />
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Memuat tampilan...</p>}>
+        <JobsViewToggle />
+      </Suspense>
       {jobs.length === 0 && (
         <p className="text-sm text-muted-foreground">Tidak ada pekerjaan ditemukan.</p>
       )}

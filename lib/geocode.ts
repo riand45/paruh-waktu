@@ -4,9 +4,23 @@ export const GeocodeQuerySchema = z.object({
   q: z.string().trim().min(1, { error: 'Kata kunci alamat wajib diisi.' }),
 })
 
+// Query params are always strings. `z.coerce.number()` alone would turn a
+// missing/empty `lat`/`lon` into 0 (`Number('') === 0`), which is inside both
+// valid ranges -- so `?lat=&lon=` would silently reverse-geocode (0, 0).
+// Reject blank input before coercing.
 export const ReverseGeocodeQuerySchema = z.object({
-  lat: z.coerce.number().min(-90).max(90),
-  lon: z.coerce.number().min(-180).max(180),
+  // `z.coerce.number<string>()`: the explicit type argument narrows the coerced
+  // schema's *input* type from `unknown` to `string` so `.pipe()` type-checks.
+  lat: z
+    .string()
+    .trim()
+    .min(1)
+    .pipe(z.coerce.number<string>().min(-90).max(90)),
+  lon: z
+    .string()
+    .trim()
+    .min(1)
+    .pipe(z.coerce.number<string>().min(-180).max(180)),
 })
 
 export interface GeocodeResult {
@@ -56,10 +70,22 @@ export function parseNominatimReverseResult(data: unknown): ReverseGeocodeResult
 const NOMINATIM_MIN_INTERVAL_MS = 1000
 let lastNominatimRequestAt = 0
 
-export async function throttleNominatimRequest(): Promise<void> {
-  const elapsed = Date.now() - lastNominatimRequestAt
-  if (elapsed < NOMINATIM_MIN_INTERVAL_MS) {
-    await new Promise((resolve) => setTimeout(resolve, NOMINATIM_MIN_INTERVAL_MS - elapsed))
-  }
-  lastNominatimRequestAt = Date.now()
+// Callers are serialized through a promise chain. Without it, concurrent
+// callers would all read the same `lastNominatimRequestAt` before any of them
+// wrote it back, sleep the identical remainder, and then fire simultaneously --
+// which is exactly the burst the throttle exists to prevent.
+let nominatimRequestQueue: Promise<void> = Promise.resolve()
+
+export function throttleNominatimRequest(): Promise<void> {
+  const next = nominatimRequestQueue.then(async () => {
+    const elapsed = Date.now() - lastNominatimRequestAt
+    if (elapsed < NOMINATIM_MIN_INTERVAL_MS) {
+      await new Promise((resolve) => setTimeout(resolve, NOMINATIM_MIN_INTERVAL_MS - elapsed))
+    }
+    lastNominatimRequestAt = Date.now()
+  })
+  // Keep the chain alive even if a caller's continuation rejects, so one
+  // failed request can't wedge the queue for every later caller.
+  nominatimRequestQueue = next.catch(() => {})
+  return next
 }
