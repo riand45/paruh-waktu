@@ -24,8 +24,10 @@ export function JobFilters({ categories }: { categories: { id: string; name: str
 
     const existingLat = searchParams.get('lat')
     const existingLng = searchParams.get('lng')
+    const existingView = searchParams.get('view')
     if (existingLat) params.set('lat', existingLat)
     if (existingLng) params.set('lng', existingLng)
+    if (existingView) params.set('view', existingView)
 
     if (extra) {
       for (const [key, value] of Object.entries(extra)) {
@@ -42,6 +44,10 @@ export function JobFilters({ categories }: { categories: { id: string; name: str
     if (category) params.set('category', category)
     if (minPayment) params.set('minPayment', minPayment)
     if (maxPayment) params.set('maxPayment', maxPayment)
+
+    const existingView = searchParams.get('view')
+    if (existingView) params.set('view', existingView)
+
     router.push(`/jobs?${params.toString()}`)
   }
 

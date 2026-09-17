@@ -1,10 +1,11 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import type { JobFormState } from '@/lib/validations/job'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MapPicker, type MapPickerValue } from '@/components/map/map-picker'
 
 interface JobCategoryOption {
   id: string
@@ -35,6 +36,11 @@ export function JobForm({
   submitLabel: string
 }) {
   const [state, formAction, pending] = useActionState(action, undefined)
+  const [location, setLocation] = useState<MapPickerValue>({
+    address: defaultValues?.address ?? '',
+    latitude: defaultValues?.latitude ?? '',
+    longitude: defaultValues?.longitude ?? '',
+  })
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -82,41 +88,20 @@ export function JobForm({
         )}
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="address">Alamat</Label>
-        <Input id="address" name="address" defaultValue={defaultValues?.address} required />
+        <Label>Lokasi</Label>
+        <MapPicker value={location} onChange={setLocation} />
+        <input type="hidden" name="address" value={location.address} />
+        <input type="hidden" name="latitude" value={location.latitude} />
+        <input type="hidden" name="longitude" value={location.longitude} />
         {state?.errors?.address && (
           <p className="text-sm text-destructive">{state.errors.address[0]}</p>
         )}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="latitude">Latitude</Label>
-          <Input
-            id="latitude"
-            name="latitude"
-            type="number"
-            step="any"
-            defaultValue={defaultValues?.latitude}
-            required
-          />
-          {state?.errors?.latitude && (
-            <p className="text-sm text-destructive">{state.errors.latitude[0]}</p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="longitude">Longitude</Label>
-          <Input
-            id="longitude"
-            name="longitude"
-            type="number"
-            step="any"
-            defaultValue={defaultValues?.longitude}
-            required
-          />
-          {state?.errors?.longitude && (
-            <p className="text-sm text-destructive">{state.errors.longitude[0]}</p>
-          )}
-        </div>
+        {state?.errors?.latitude && (
+          <p className="text-sm text-destructive">{state.errors.latitude[0]}</p>
+        )}
+        {state?.errors?.longitude && (
+          <p className="text-sm text-destructive">{state.errors.longitude[0]}</p>
+        )}
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="paymentAmount">Nominal Pembayaran (Rp)</Label>

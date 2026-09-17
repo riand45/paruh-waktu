@@ -59,6 +59,71 @@ describe('CreateJobSchema', () => {
     expect(CreateJobSchema.safeParse({ ...valid, longitude: '-200' }).success).toBe(false)
   })
 
+  it('rejects an empty latitude instead of coercing it to 0', () => {
+    const result = CreateJobSchema.safeParse({ ...valid, latitude: '' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.latitude).toEqual(['Pilih lokasi pada peta.'])
+    }
+  })
+
+  it('rejects an empty longitude instead of coercing it to 0', () => {
+    const result = CreateJobSchema.safeParse({ ...valid, longitude: '' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.longitude).toEqual(['Pilih lokasi pada peta.'])
+    }
+  })
+
+  it('rejects whitespace-only coordinates', () => {
+    expect(CreateJobSchema.safeParse({ ...valid, latitude: '   ' }).success).toBe(false)
+    expect(CreateJobSchema.safeParse({ ...valid, longitude: '   ' }).success).toBe(false)
+  })
+
+  it('rejects missing coordinates (no location field submitted at all)', () => {
+    const withoutCoordinates: Record<string, unknown> = { ...valid }
+    delete withoutCoordinates.latitude
+    delete withoutCoordinates.longitude
+    const result = CreateJobSchema.safeParse(withoutCoordinates)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors
+      expect(fieldErrors.latitude).toEqual(['Pilih lokasi pada peta.'])
+      expect(fieldErrors.longitude).toEqual(['Pilih lokasi pada peta.'])
+    }
+  })
+
+  it('rejects non-numeric coordinates', () => {
+    expect(CreateJobSchema.safeParse({ ...valid, latitude: 'abc' }).success).toBe(false)
+    expect(CreateJobSchema.safeParse({ ...valid, longitude: 'abc' }).success).toBe(false)
+  })
+
+  it('still accepts valid coordinates, including a legitimate 0', () => {
+    const result = CreateJobSchema.safeParse({ ...valid, latitude: '0', longitude: '0' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.latitude).toBe(0)
+      expect(result.data.longitude).toBe(0)
+    }
+  })
+
+  // createJob()/updateJob() in lib/services/jobs.ts re-validate their already-
+  // parsed input, so parsing this schema's own output must keep succeeding.
+  it('is idempotent: parsing its own output succeeds (services re-validate)', () => {
+    const first = CreateJobSchema.parse(valid)
+    const second = CreateJobSchema.safeParse(first)
+    expect(second.success).toBe(true)
+    if (second.success) {
+      expect(second.data.latitude).toBe(-6.2088)
+      expect(second.data.longitude).toBe(106.8456)
+    }
+  })
+
+  it('still range-checks numeric (already-coerced) coordinates', () => {
+    expect(CreateJobSchema.safeParse({ ...valid, latitude: 200 }).success).toBe(false)
+    expect(CreateJobSchema.safeParse({ ...valid, longitude: -200 }).success).toBe(false)
+  })
+
   it('rejects a deadline in the past', () => {
     const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     expect(CreateJobSchema.safeParse({ ...valid, deadline: past }).success).toBe(false)

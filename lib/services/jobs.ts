@@ -158,6 +158,8 @@ export interface JobListing {
   durationMinutes: number
   deadline: string
   distanceKm: number | null
+  latitude: number
+  longitude: number
 }
 
 async function getDefaultJobRadiusKm(supabase: ServiceClient): Promise<number> {
@@ -213,6 +215,8 @@ export async function getJobListing(filters: JobListingFilters): Promise<JobList
     paymentAmount: job.payment_amount,
     durationMinutes: job.duration_minutes,
     deadline: job.deadline,
+    latitude: job.latitude,
+    longitude: job.longitude,
     distanceKm: hasLocation
       ? haversineDistanceKm(
           { latitude: filters.workerLat as number, longitude: filters.workerLng as number },

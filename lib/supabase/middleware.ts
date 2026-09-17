@@ -38,9 +38,14 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 
+  // /api/* is intentionally exempt from the redirect (not from session refresh --
+  // getClaims() above still runs): a fetch-based JSON caller needs a 401, not a
+  // 302 to /auth/login. Every Route Handler under /api MUST therefore do its own
+  // getCurrentUser()/requireRole() check.
   const isPublicPath =
     request.nextUrl.pathname === '/' ||
-    request.nextUrl.pathname.startsWith('/auth')
+    request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/api')
 
   if (!user && !isPublicPath) {
     // no user, potentially respond by redirecting the user to the login page
