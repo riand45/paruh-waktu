@@ -111,6 +111,7 @@ export interface AdminJobDetail {
   deadline: string
   cancelledReason: string | null
   paymentStatus: string | null
+  paymentId: string | null
   createdAt: string
 }
 
@@ -145,7 +146,7 @@ export async function getJobDetailForAdmin(jobId: string): Promise<AdminJobDetai
     assignedWorkerName = workerProfile?.full_name ?? 'Tidak diketahui'
   }
 
-  const { data: payment } = await supabase.from('payments').select('status').eq('job_id', jobId).maybeSingle()
+  const { data: payment } = await supabase.from('payments').select('id, status').eq('job_id', jobId).maybeSingle()
 
   return {
     id: job.id,
@@ -164,6 +165,7 @@ export async function getJobDetailForAdmin(jobId: string): Promise<AdminJobDetai
     deadline: job.deadline,
     cancelledReason: job.cancelledReason,
     paymentStatus: payment?.status ?? null,
+    paymentId: payment?.id ?? null,
     createdAt: job.createdAt,
   }
 }
@@ -177,6 +179,9 @@ function mapCancelJobError(message: string): Error {
   }
   if (message.includes('use cancel_job_and_refund')) {
     return appError('CONFLICT', 'Pekerjaan ini memiliki pembayaran terverifikasi — gunakan alur refund.')
+  }
+  if (message.includes('resolve pending payment review first')) {
+    return appError('CONFLICT', 'Pekerjaan ini memiliki pembayaran yang sedang direview — selesaikan review pembayaran terlebih dahulu.')
   }
   if (message.includes('already cancelled or completed')) {
     return appError('CONFLICT', 'Pekerjaan ini sudah dibatalkan atau selesai.')

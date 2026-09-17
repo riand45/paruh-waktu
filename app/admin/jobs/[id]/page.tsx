@@ -20,6 +20,7 @@ export default async function AdminJobDetailPage({
 
   const isCancellable = job.status !== 'cancelled' && job.status !== 'completed'
   const needsRefundPath = job.paymentStatus === 'verified'
+  const needsPaymentReviewFirst = job.paymentStatus === 'waiting_verification'
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
@@ -65,10 +66,23 @@ export default async function AdminJobDetailPage({
       <Link href={`/jobs/${job.id}`} className="text-sm text-primary underline-offset-4 hover:underline">
         Lihat Halaman Publik
       </Link>
+      {isCancellable && needsPaymentReviewFirst && (
+        <p className="rounded-md border border-yellow-600/30 bg-yellow-600/10 p-3 text-sm">
+          Pekerjaan ini memiliki pembayaran yang sedang direview dan belum bisa dibatalkan.{' '}
+          {job.paymentId ? (
+            <Link href={`/admin/payments/${job.paymentId}`} className="underline underline-offset-4">
+              Selesaikan review pembayaran
+            </Link>
+          ) : (
+            'Selesaikan review pembayaran'
+          )}{' '}
+          terlebih dahulu.
+        </p>
+      )}
       {isCancellable && needsRefundPath && (
         <CancelJobForm jobId={job.id} action={cancelJobAndRefundAction} label="Batalkan & Mulai Refund" />
       )}
-      {isCancellable && !needsRefundPath && (
+      {isCancellable && !needsRefundPath && !needsPaymentReviewFirst && (
         <CancelJobForm jobId={job.id} action={cancelJobAction} label="Batalkan Pekerjaan" />
       )}
     </div>
